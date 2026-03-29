@@ -11,6 +11,7 @@ A comprehensive AI-powered energy forecasting system that predicts energy consum
 - [Project Structure](#project-structure)
 - [Installation & Setup](#installation--setup)
 - [Usage Guide](#usage-guide)
+- [Telegram Bot Integration](#telegram-bot-integration)
 - [API Endpoints](#api-endpoints)
 - [Workflow & Data Flow](#workflow--data-flow)
 - [Components Description](#components-description)
@@ -140,6 +141,7 @@ The Energy Forecast System is a full-stack application designed to:
 - **GenAI Integration**: Natural language report generation using Groq API
 - **AWS Integration**: S3 storage and Lambda serverless processing
 - **CORS Support**: Enable cross-origin requests for web frontend
+- **Telegram Bot Integration**: Direct CSV upload and PDF report generation via Telegram messenger
 
 ## 🛠️ Tech Stack
 
@@ -157,6 +159,12 @@ The Energy Forecast System is a full-stack application designed to:
 - **HTML5**: Responsive UI with CSS3 effects
 - **JavaScript**: Client-side file upload and API calls
 - **Chart.js**: Data visualization and forecasting charts
+
+### Telegram Bot
+- **Framework**: python-telegram-bot (PTB)
+- **PDF Generation**: ReportLab
+- **Visualization**: Matplotlib
+- **File Handling**: AWS S3 integration
 
 ### Development Tools
 - **Virtual Environment**: Python venv
@@ -199,7 +207,12 @@ energy-forecast-system/
 │   └── boto3 library files
 │
 ├── frontend/              # Web user interface
-│   └── index.html        # Single-page dashboard application
+│   ├── index.html        # Single-page dashboard application
+│   ├── script.js         # Frontend JavaScript logic
+│   └── styles.css        # Styling
+│
+├── backend/app/
+│   ├── telegram_bot.py   # Telegram bot integration
 │
 ├── data/                 # Data directory structure
 │   ├── raw/             # Raw input data & uploads
@@ -310,14 +323,87 @@ python -m http.server 8080 --directory frontend
 
 Navigate to: `http://localhost:8080`
 
-### 3. Upload Energy Data
+### 3. Upload Energy Data via Web Interface
 - Click "Upload CSV" button
 - Select a CSV file with energy consumption data
 - File must contain:
   - `datetime` column (ISO format: YYYY-MM-DD HH:MM:SS)
   - `energy_usage_kWh` column (numeric values)
 - Click "Predict & Generate Report"
+## 🤖 Telegram Bot Integration
 
+### Features
+- **Direct Telegram Access**: Upload CSV files directly through Telegram messenger
+- **Instant Processing**: Real-time energy forecasting and analysis
+- **PDF Reports**: Automatic generation of comprehensive energy analytics reports
+- **24-Hour Forecast Chart**: Visual representation of predicted energy usage
+- **AI Insights**: Energy-saving recommendations based on GenAI analysis
+- **Cost Breakdown**: Detailed cost calculations and projections
+
+### Setup
+
+#### 1. Create Telegram Bot
+- Open Telegram and chat with [@BotFather](https://t.me/botfather)
+- Use `/newbot` command to create a new bot
+- Copy your bot token (format: `123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`)
+
+#### 2. Update Bot Token
+Replace the token in `backend/app/telegram_bot.py` (line 23):
+```python
+BOT_TOKEN = "your_bot_token_here"
+```
+
+#### 3. Install Telegram Bot Dependencies
+```bash
+pip install python-telegram-bot reportlab matplotlib
+```
+
+#### 4. Ensure Backend is Running
+The Telegram bot requires the FastAPI backend running on `http://127.0.0.1:8000`
+
+### Running the Bot
+
+**Start the Telegram bot in a separate terminal:**
+```bash
+cd backend/app
+python telegram_bot.py
+```
+
+You should see: `✅ Telegram bot running...`
+
+### Using the Bot
+
+1. **Start the Bot**
+   - Open Telegram and search for your bot (using the username you chose)
+   - Send `/start` command
+   - You'll receive a welcome message
+
+2. **Upload CSV File**
+   - Click the paperclip icon to attach a file
+   - Select a CSV file with energy consumption data
+   - Send the file to the bot
+
+3. **Wait for Processing**
+   - Bot validates the CSV file
+   - Runs ML prediction model
+   - Invokes GenAI for insights
+   - Generates PDF report with visualizations
+
+4. **Receive Report**
+   - The bot sends a comprehensive PDF report
+   - Report includes:
+     - Summary statistics (rows analyzed, anomalies detected, costs)
+     - 24-hour forecast chart
+     - AI-generated insights
+     - Energy-saving recommendations
+
+### CSV File Requirements
+Same as web interface:
+- Column: `datetime` (ISO format: YYYY-MM-DD HH:MM:SS)
+- Column: `energy_usage_kWh` (numeric values)
+- No empty rows or missing values in these columns
+
+### API Response
 ### 4. API Response
 You'll receive:
 ```json
@@ -496,6 +582,23 @@ You'll receive:
 - Summary statistics display
 - AI report rendering
 
+### Telegram Bot Components (telegram_bot.py)
+
+#### Core Functions
+- `start()`: Handles `/start` command, displays welcome message
+- `handle_csv()`: Processes uploaded CSV files from users
+- `create_forecast_chart()`: Generates matplotlib visualization of 24-hour forecast
+- `generate_pdf()`: Creates comprehensive PDF report using ReportLab
+- `clean_ai_text()`: Cleans and formats AI-generated text for PDF
+- `split_points()`: Converts text into bullet points for better readability
+- `main()`: Initializes and runs the Telegram bot application
+
+#### Report Contents
+- **Summary Overview**: Rows analyzed, anomalies, costs, projections
+- **24-Hour Forecast Chart**: Visual forecast of energy usage
+- **AI Generated Insights**: Groq LLM analysis of energy patterns
+- **Energy Saving Recommendations**: Actionable tips for reducing consumption
+
 ### Lambda Components
 
 #### lambda_handler.py
@@ -541,11 +644,15 @@ features = [
 # Activate virtual environment
 .\env\Scripts\Activate.ps1
 
-# Start backend
+# Terminal 1: Start backend
 cd backend
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-# In another terminal, serve frontend
+# Terminal 2: Start Telegram bot
+cd backend/app
+python telegram_bot.py
+
+# Terminal 3: Serve frontend
 python -m http.server 8080 --directory frontend
 ```
 
@@ -608,6 +715,20 @@ FastAPI already includes CORS middleware allowing all origins. Check backend is 
 - Check Groq API key is valid and has credits
 - Verify S3 permissions for Lambda execution role
 
+### Issue: Telegram bot connection error
+**Solution:**
+- Verify bot token is correct in `telegram_bot.py`
+- Ensure backend is running on `http://127.0.0.1:8000`
+- Check internet connection
+- Verify `python-telegram-bot` is installed
+
+### Issue: PDF report not generating
+**Solution:**
+- Verify ReportLab is installed: `pip install reportlab`
+- Ensure Matplotlib is installed: `pip install matplotlib`
+- Check backend API is accessible from Telegram bot
+- Verify AI report generation is working in backend
+
 ## 📈 Example CSV Format
 
 ```csv
@@ -617,6 +738,21 @@ datetime,energy_usage_kWh
 2026-01-01 02:00:00,39.8
 2026-01-01 03:00:00,38.5
 ...
+```
+
+## 📱 Telegram Bot Command Reference
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/start` | Initialize the bot and show welcome message | Send in the chat |
+| File Upload | Send CSV file for processing | Use Telegram's file attachment feature |
+| Auto-Response | Bot processes and returns PDF report | Automatic after receiving valid CSV |
+
+### Bot Workflow
+```
+User sends CSV → Bot validates → Backend processes
+→ ML prediction → GenAI insights → PDF generation
+→ Bot sends PDF report → User receives forecast & recommendations
 ```
 
 ## 📚 Additional Resources
