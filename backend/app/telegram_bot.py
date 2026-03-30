@@ -32,7 +32,6 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_URL = os.getenv("API_URL")
 # ================= CONFIG =================
 
-# BOT_TOKEN = "8285920911:AAG2IADPYm5QavsnkDjEJSdr1aOK11TnIk8"
 
 # API_URL = "http://127.0.0.1:8000/predict/"
 
